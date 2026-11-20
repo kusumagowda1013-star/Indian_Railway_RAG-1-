@@ -1,4 +1,3 @@
-```python
 import streamlit as st
 from rag_engine import load_base, ask_rag
 
@@ -13,12 +12,16 @@ st.set_page_config(
 )
 
 # --------------------------------------------------
-# CUSTOM TITLE AND CAPTION
+# MAIN TITLE
 # --------------------------------------------------
 
 st.title("🚆 Indian Railway Chatbot")
-st.caption("Your AI-powered assistant for information about Indian Railways.")
-st.markdown(
+
+st.caption(
+    "Your AI-powered assistant for information about Indian Railways."
+)
+
+st.write(
     "Ask questions about Indian Railways, its history, "
     "Vande Bharat Express, railway stations and more."
 )
@@ -30,37 +33,47 @@ st.markdown(
 st.sidebar.title("🚆 Railway RAG Assistant")
 
 with st.sidebar.expander("ℹ️ About Project", expanded=True):
+
     st.write(
         """
         Indian Railway Chatbot is an AI-powered chatbot
-        built using Retrieval-Augmented Generation (RAG).
+        developed using Retrieval-Augmented Generation (RAG).
 
-        It retrieves relevant information from railway
-        PDF documents and generates answers using an LLM.
+        It retrieves relevant information from railway PDF
+        documents and generates answers using a Large
+        Language Model.
         """
     )
 
+# --------------------------------------------------
+# TECHNOLOGIES USED
+# --------------------------------------------------
+
 with st.sidebar.expander("🛠️ Technologies Used"):
-    st.markdown("""
-    - Python
-    - Streamlit
-    - Retrieval-Augmented Generation (RAG)
-    - PyPDF
-    - Sentence Transformers
-    - FAISS Vector Database
-    - Groq LLM
-    - NumPy
-    - Graphviz
-    """)
+
+    st.markdown(
+        """
+        - Python
+        - Streamlit
+        - Retrieval-Augmented Generation (RAG)
+        - PyPDF
+        - Sentence Transformers
+        - FAISS Vector Database
+        - Groq LLM
+        - NumPy
+        - Graphviz
+        """
+    )
 
 # --------------------------------------------------
-# GRAPHICAL RAG PIPELINE FLOWCHART
+# GRAPHICAL RAG PIPELINE
 # --------------------------------------------------
 
 with st.sidebar.expander("🔄 RAG Pipeline Flowchart", expanded=True):
 
     rag_flowchart = """
     digraph RAG {
+
         rankdir=TB;
 
         node [
@@ -72,8 +85,7 @@ with st.sidebar.expander("🔄 RAG Pipeline Flowchart", expanded=True):
         ];
 
         edge [
-            color="#34495E",
-            fontname="Arial"
+            color="#34495E"
         ];
 
         A [label="Railway PDF Documents"];
@@ -106,37 +118,45 @@ with st.sidebar.expander("🔄 RAG Pipeline Flowchart", expanded=True):
     st.graphviz_chart(rag_flowchart, use_container_width=True)
 
 st.sidebar.markdown("---")
-st.sidebar.caption("Powered by Retrieval-Augmented Generation (RAG)")
+st.sidebar.caption("Powered by Retrieval-Augmented Generation")
 
 # --------------------------------------------------
 # GROQ API KEY
 # --------------------------------------------------
 
 try:
+
     GROQ_API_KEY = st.secrets["GROQ_API_KEY"]
 
 except Exception:
+
     st.error(
         "Groq API key not found. Please add GROQ_API_KEY "
-        "in your Streamlit application Secrets."
+        "in Streamlit Community Cloud Secrets."
     )
+
     st.stop()
 
 # --------------------------------------------------
-# LOAD RAG DATABASE
+# LOAD RAG KNOWLEDGE BASE
 # --------------------------------------------------
 
 @st.cache_resource
 def initiate_rag():
+
     return load_base("railway.docs")
 
 
 try:
-    with st.spinner("Loading Indian Railway knowledge base..."):
+
+    with st.spinner("Loading railway knowledge base..."):
+
         index, embed_model, chunks = initiate_rag()
 
 except Exception as e:
+
     st.error(f"Error loading railway documents: {e}")
+
     st.stop()
 
 # --------------------------------------------------
@@ -144,6 +164,7 @@ except Exception as e:
 # --------------------------------------------------
 
 if "chat_hist" not in st.session_state:
+
     st.session_state.chat_hist = []
 
 # --------------------------------------------------
@@ -151,11 +172,13 @@ if "chat_hist" not in st.session_state:
 # --------------------------------------------------
 
 if st.sidebar.button("🗑️ Clear Chat", use_container_width=True):
+
     st.session_state.chat_hist = []
+
     st.rerun()
 
 # --------------------------------------------------
-# DISPLAY PREVIOUS CHAT MESSAGES
+# DISPLAY CHAT WINDOW
 # --------------------------------------------------
 
 st.subheader("💬 Chat with Indian Railway Assistant")
@@ -163,10 +186,11 @@ st.subheader("💬 Chat with Indian Railway Assistant")
 for message in st.session_state.chat_hist:
 
     with st.chat_message(message["role"]):
+
         st.markdown(message["content"])
 
 # --------------------------------------------------
-# CHAT INPUT
+# USER CHAT INPUT
 # --------------------------------------------------
 
 user_question = st.chat_input(
@@ -176,21 +200,30 @@ user_question = st.chat_input(
 if user_question:
 
     # Display user question
+
     with st.chat_message("user"):
+
         st.markdown(user_question)
 
     # Save user question
-    st.session_state.chat_hist.append({
-        "role": "user",
-        "content": user_question
-    })
 
-    # Generate chatbot answer
+    st.session_state.chat_hist.append(
+        {
+            "role": "user",
+            "content": user_question
+        }
+    )
+
+    # Generate assistant response
+
     with st.chat_message("assistant"):
 
-        with st.spinner("Searching railway documents and generating answer..."):
+        with st.spinner(
+            "Searching railway documents and generating answer..."
+        ):
 
             try:
+
                 answer = ask_rag(
                     user_question,
                     embed_model,
@@ -202,14 +235,19 @@ if user_question:
                 st.markdown(answer)
 
             except Exception as e:
+
                 answer = f"Sorry, an error occurred: {e}"
+
                 st.error(answer)
 
-    # Save chatbot answer
-    st.session_state.chat_hist.append({
-        "role": "assistant",
-        "content": answer
-    })
+    # Save assistant response
+
+    st.session_state.chat_hist.append(
+        {
+            "role": "assistant",
+            "content": answer
+        }
+    )
 
 # --------------------------------------------------
 # CHAT HISTORY IN SIDEBAR
@@ -221,18 +259,27 @@ with st.sidebar.expander("💬 Chat History", expanded=True):
 
     if st.session_state.chat_hist:
 
-        for i, message in enumerate(st.session_state.chat_hist):
+        for message in st.session_state.chat_hist:
 
             if message["role"] == "user":
-                st.markdown(f"**👤 You:** {message['content']}")
+
+                st.markdown(
+                    f"**👤 You:** {message['content']}"
+                )
 
             else:
-                st.markdown(f"**🤖 Assistant:** {message['content']}")
+
+                st.markdown(
+                    f"**🤖 Assistant:** {message['content']}"
+                )
 
             st.divider()
 
     else:
-        st.caption("Your conversation history will appear here.")
+
+        st.caption(
+            "Your conversation history will appear here."
+        )
 
 # --------------------------------------------------
 # FOOTER
@@ -245,4 +292,3 @@ st.markdown(
     "Built using Python, Streamlit and RAG</center>",
     unsafe_allow_html=True
 )
-```
